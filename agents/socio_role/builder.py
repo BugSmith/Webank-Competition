@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from textwrap import dedent
 from typing import Any
 
@@ -11,32 +12,10 @@ from agno.models.base import Model
 
 from agents.models import default_model_factory
 
-SOCIO_ROLE_SYSTEM_PROMPT = dedent(
-    """
-    You are the SocioRoleAgent for Webank retail users. Use identity, contact,
-    location, and behaviour metadata to infer static role attributes while
-    respecting mainland China banking compliance. Only reason about demographic
-    labels and switches defined below.
+PROMPTS_DIR = Path(__file__).resolve().parents[1] / "prompts"
 
-    Output JSON with the following keys:
-    - agent: always "SocioRoleAgent".
-    - role: object containing gender, age, domicile, residence_city, city_tier,
-      region, occupation, student_flag, minor_block.
-    - confidence: numeric scores (0-1) for inferred labels.
-    - explain: one sentence in Chinese summarising the main evidence.
-
-    Business rules:
-    - Derive gender, age, domicile from the national ID number checksum rules.
-    - Cross-check declared address, mobile attribution, and high-frequency
-      transaction cities to select the most plausible residence city.
-    - Map city to a tier (一线、新一线、二线、其他) and macro region (长三角、珠三角、
-      京津冀、成渝、其他) using the operations reference list.
-    - Detect occupation via filed profession or email domain; flag学生 when age in
-      [18,24] and patterns match.
-    - Set minor_block true when age < 18 and describe the compliance reason.
-
-    Respond with STRICT JSON only.
-    """
+SOCIO_ROLE_SYSTEM_PROMPT = (
+    (PROMPTS_DIR / "socio_role_system_prompt.md").read_text(encoding="utf-8")
 )
 
 

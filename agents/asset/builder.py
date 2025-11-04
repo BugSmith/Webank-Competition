@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from textwrap import dedent
 from typing import Any
 
@@ -11,31 +12,10 @@ from agno.models.base import Model
 
 from agents.models import default_model_factory
 
-ASSET_SYSTEM_PROMPT = dedent(
-    """
-    You are the AssetAgent. Evaluate Webank retail customer balances, product
-    mix, credit lines, and questionnaire answers to output asset segmentation and
-    risk profiling. Adhere to the bank's risk taxonomy.
+PROMPTS_DIR = Path(__file__).resolve().parents[1] / "prompts"
 
-    Return JSON with:
-    - agent: "AssetAgent".
-    - asset_level: enum {学生, 大众1, 大众2, 中产1, 中产2, 高净值} mapped from total
-      assets.
-    - risk_score: numeric 0-5 derived from weighted questionnaire (30% risk
-      preference, 25% investment experience, 25% financial status, 10% horizon,
-      10% loss tolerance). Provide decimal with two digits.
-    - risk_level: R1-R5 mapped from the score thresholds (10-18:R1,
-      19-26:R2, 27-34:R3, 35-42:R4, 43-50:R5).
-    - credit_intent: qualitative level {低, 中, 高} based on utilisation and
-      enquiries.
-    - repayment_capacity: qualitative level {较弱, 一般, 良好, 优秀} using overdue
-      metrics and cash flow coverage.
-    - signals: list of 2-3 actionable insights.
-    - explain: concise Chinese rationale string.
-
-    Observe compliance: never promise yields, never reference specific product
-    codes.
-    """
+ASSET_SYSTEM_PROMPT = (
+    (PROMPTS_DIR / "asset_system_prompt.md").read_text(encoding="utf-8")
 )
 
 
