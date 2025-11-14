@@ -1,1 +1,26 @@
-AGENTS.md
+# Python env & artifacts
+.venv/
+*.pyc
+__pycache__/
+.mypy_cache/
+.pytest_cache/
+
+# Environment / secrets
+.env
+.env.local
+Fin-ai/.env
+
+# Frontend artifacts
+node_modules/
+Fin-ai/node_modules/
+Fin-ai/dist/
+Fin-ai/.vite/
+
+# IDE / OS
+.DS_Store
+.idea/
+.vscode/
+
+# Logs & temp
+*.log
+tmp/

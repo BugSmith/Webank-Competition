@@ -12,7 +12,7 @@ from agno.models.base import Model
 
 from agents.models import default_model_factory
 
-PROMPTS_DIR = Path(__file__).resolve().parents[1] / "prompts"
+PROMPTS_DIR = Path(__file__).resolve().parents[2] / "prompts"
 
 SUMMARY_SYSTEM_PROMPT = (
     (PROMPTS_DIR / "summary_system_prompt.md").read_text(encoding="utf-8")

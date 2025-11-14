@@ -1,0 +1,12 @@
+[
+  {
+    "sender": "user",
+    "message": "我想了解近期基金表现",
+    "created_at": "2024-05-10T02:00:00Z"
+  },
+  {
+    "sender": "assistant",
+    "message": "最近您的基金组合波动较小。",
+    "created_at": "2024-05-10T02:01:00Z"
+  }
+]

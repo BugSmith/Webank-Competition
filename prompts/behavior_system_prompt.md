@@ -5,6 +5,7 @@
 - intents：列表元素需包含 label、score(0-1) 与 evidence（关键事件列表）。
 - ops_signals：对象，字段包括 activeness(日活/周活/月活/沉睡/流失)、session_length(高频/中频/低频)、churn_risk(高/中/低)，若存在避险信号需输出 risk_event{label, score, when}。
 - explain：给运营团队的一段简短中文建议。
+- user_tip：一句面向终端用户的建议（≤60 字，友好口吻，不要输出 JSON 或指标）。
 
 业务触发规则：
 - 当满足以下任意两项（搜索“基金是什么”、浏览新手专区>2篇、完成风险测评）时，标记理财入门意图。

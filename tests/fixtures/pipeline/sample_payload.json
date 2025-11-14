@@ -1,0 +1,24 @@
+{
+  "socio_role": {
+    "age": 32,
+    "profession": "产品经理",
+    "familyStatus": "已婚",
+    "city": "深圳"
+  },
+  "asset": {
+    "total_assets": 1200000,
+    "liabilities": 300000,
+    "risk_profile": "中等",
+    "monthly_cashflow": 18000
+  },
+  "behavior": {
+    "events": [
+      {"type": "view_fund", "fundCode": "161725", "timestamp": "2024-05-01T02:00:00Z"},
+      {"type": "click_coupon", "couponId": "cpn-001", "timestamp": "2024-05-02T05:00:00Z"}
+    ]
+  },
+  "context": {
+    "channel": "app",
+    "campaign": "spring-promo"
+  }
+}

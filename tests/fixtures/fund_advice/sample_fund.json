@@ -1,0 +1,14 @@
+{
+  "name": "稳健优选混合A",
+  "code": "009999",
+  "category": "混合型",
+  "risk": "中低",
+  "nav": 1.2345,
+  "change": "+0.0100",
+  "changePercent": "1.00%",
+  "manager": "李明",
+  "history": {
+    "one_month": "0.8%",
+    "three_month": "3.4%"
+  }
+}
