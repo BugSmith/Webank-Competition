@@ -34,7 +34,8 @@ def format_behavior_prompt(payload: dict[str, Any]) -> str:
     example = json.dumps(payload, ensure_ascii=False, indent=2)
     return dedent(
         f"""
-        请基于以下交互与市场数据生成意图标签与运营信号。
+        请基于以下交互与市场数据生成意图标签与运营信号，务必让 user_tip
+        结合最近一次关键事件或基金名称，提供明确的下一步建议，禁止输出笼统提醒。
 
         输入JSON:
         ```json

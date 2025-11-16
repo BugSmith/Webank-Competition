@@ -5,6 +5,15 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV_PATH="$REPO_ROOT/.venv"
 FRONTEND_DIR="$REPO_ROOT/Fin-ai"
 DEFAULT_PIPELINE_INPUT="$REPO_ROOT/tests/fixtures/pipeline/sample_payload.json"
+ENV_FILE="$REPO_ROOT/.env"
+
+if [[ -f "$ENV_FILE" ]]; then
+  # 加载仓库根目录的环境变量，供 CLI/后端共享
+  set -a
+  # shellcheck disable=SC1090
+  source "$ENV_FILE"
+  set +a
+fi
 
 ensure_venv() {
   if [[ ! -d "$VENV_PATH" ]]; then
@@ -39,6 +48,10 @@ cmd_pipeline() {
   local input="${1:-$DEFAULT_PIPELINE_INPUT}"
   local user_id="${2:-UTSZ}"
   local output="${3:-/tmp/utsz_insights.json}"
+  local skip_flag=""
+  if [[ "${WEBANK_SKIP_DB,,}" == "true" ]]; then
+    skip_flag="--skip-db"
+  fi
   ensure_venv
   activate_venv
   export AGNO_MODEL_ID="${AGNO_MODEL_ID:-qwen-turbo-latest}"
@@ -46,7 +59,8 @@ cmd_pipeline() {
   python -m agents.cli refresh-insights \
     --input "$input" \
     --user-id "$user_id" \
-    --output "$output"
+    --output "$output" \
+    $skip_flag
 }
 
 cmd_backend() {

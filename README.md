@@ -18,17 +18,14 @@
 
 ## 快速开始
 1. 新建并激活 Python 3.10+ 虚拟环境。
-2. 安装依赖（确保包含 `agno`）。
+2. 安装依赖（`requirements.txt` 会拉取 agno、DashScope SDK 及 OpenTelemetry）。
 3. 设置 DashScope 凭据，可选地调整模型与温度。
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install agno
-export DASHSCOPE_API_KEY="<your-key>"
-export DASHSCOPE_BASE_URL="https://dashscope.aliyuncs.com/compatible-mode/v1"
-export AGNO_MODEL_ID="qwen-turbo-latest"  # 可选，默认即为该模型
-export AGNO_TEMPERATURE="0.3"      # 可选
+pip install -r requirements.txt
+cp .env.example .env  # 写入你的 DashScope / LangSmith 凭证
 ```
 
 ## 使用示例
@@ -47,7 +44,7 @@ print(result["summary"]["recommendations"])
 ```
 
 ## 一键运行
-项目根目录提供 `start.sh`，常用命令如下：
+项目根目录提供 `start.sh`（会自动读取同目录下的 `.env`），常用命令如下：
 
 ```bash
 # 安装 Python / 前端依赖
@@ -64,12 +61,13 @@ print(result["summary"]["recommendations"])
 ```
 
 ## CLI 刷新洞察
-可使用打包好的命令行工具运行完整管线并将结果写入数据库（等价于调用 `/api/ai/insights/refresh`）：
+可使用打包好的命令行工具运行完整管线并将结果写入数据库（等价于调用 `/api/ai/insights/refresh`）。如需在本地无数据库时跳过持久化，可加 `--skip-db` 或设置 `WEBANK_SKIP_DB=true`：
 
 ```bash
 python -m agents.cli refresh-insights \
   --input tests/fixtures/pipeline/sample_payload.json \
   --user-id UTSZ \
+  --skip-db \
   --output /tmp/utsz_insights.json
 ```
 
@@ -79,3 +77,20 @@ python -m agents.cli refresh-insights \
 - 后端 `/api/ai/conversation` / `/api/ai/insights/refresh` 已直接复用 `agents/conversation`，请在启动 Flask 前设置 `DASHSCOPE_API_KEY`、`DASHSCOPE_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1` 以及 `AGNO_MODEL_ID=qwen-turbo-latest`。
 - 行为 Agent 现在会生成 `user_tip` 字段，后端将其转换成适合展示的短句，确保 AI 气泡不再出现原始 JSON。
 - 基金列表接口支持携带 `userId`，服务端会根据最新 Summary 中的 `recommendations` 为命中的基金添加 `highlighted/highlightReason`，前端据此仅高亮真正适配的产品。
+- 基金建议 API 默认启动 5 分钟内的 Agent 结果缓存，可通过 `FUND_ADVICE_CACHE_TTL`（秒）调整或关闭（设为 `0`）。命中缓存时响应包含 `cacheHit: true` 字段。
+
+## LangSmith 监控接入
+仓库已内置 `agents/common/telemetry.py`，当开启 OpenTelemetry 配置后，`WebankAgentPipeline`、`ConversationService` 以及行为/基金等运行时桥接层都会自动为每次 LLM 调用生成一个 span，并通过 OTLP 推送到 LangSmith：
+
+```bash
+export LANGSMITH_API_KEY="<your-langsmith-key>"
+export LANGSMITH_PROJECT="webank-dev"            # 可选，默认走 LangSmith 的默认项目
+export WEBANK_ENABLE_OTEL=true                    # 显式启用可观测性
+# 可选：覆盖服务名或自定义 OTLP 目的地
+# export OTEL_SERVICE_NAME="webank-agents"
+# export OTEL_EXPORTER_OTLP_ENDPOINT="https://api.smith.langchain.com/otel/v1/traces"
+```
+
+- 若需要自定义 Header，可设置 `OTEL_EXPORTER_OTLP_HEADERS`（例如 `x-api-key=...,x-langsmith-project=...`）。
+- 也可以直接设置标准 OpenTelemetry 环境变量（`OTEL_EXPORTER_OTLP_*`）；只要 tracer provider 尚未初始化，`configure_tracing()` 会自动采用这些参数。
+- 启动 `./start.sh pipeline`、`./start.sh backend` 或运行 `agents.cli`、`myos.py` 时均会触发同一套追踪逻辑，从而在 [LangSmith Sessions](https://smith.langchain.com/) 页面查看调用链、耗时与错误详情。

@@ -37,6 +37,14 @@
   在 CI 中触发真实 API。
 - 目标分支覆盖率 ≥90%；若无法满足，需在 PR 中说明风险与后续计划。
 
+## Observability
+- `agents/common/telemetry.py` 已封装 LangSmith OpenTelemetry 接入，设置
+  `WEBANK_ENABLE_OTEL=true` 与 `LANGSMITH_API_KEY=<key>`（可选 `LANGSMITH_PROJECT`）
+  即可在不改代码的情况下采集所有 LLM 调用的追踪信息。
+- 如需自定义导出端点，请配置标准 OTLP 环境变量（`OTEL_EXPORTER_OTLP_ENDPOINT`、
+  `OTEL_EXPORTER_OTLP_HEADERS` 等）；若 tracer provider 已由外部注入，则
+  该模块会复用现有设置，避免重复初始化。
+
 ## Commit & Pull Request Guidelines
 - 提交信息遵循 Conventional Commits（如 `feat: intent scoring`、
   `fix: risk adapter`），方便自动生成变更日志。

@@ -7,6 +7,7 @@ import logging
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
+from agents.common.telemetry import trace_agent_span
 from agents.conversation.builder import (
     build_conversation_agent,
     format_conversation_prompt,
@@ -82,8 +83,15 @@ class ConversationService:
         prompt = format_conversation_prompt(message, insights, history, context)
 
         try:
-            raw_output = self.agent.run(prompt)
-            reply_payload = _coerce_response(raw_output)
+            with trace_agent_span(
+                "agent.conversation",
+                {
+                    "agent.name": self.agent.name or "ConversationAgent",
+                    "conversation.channel": channel,
+                },
+            ):
+                raw_output = self.agent.run(prompt)
+                reply_payload = _coerce_response(raw_output)
         except Exception as exc:  # pragma: no cover - defensive guard
             logger.exception("Conversation agent failed for user %s: %s", user_id, exc)
             reply_payload = {

@@ -1,0 +1,5 @@
+agno>=0.4.0
+dashscope>=1.20.0
+python-dotenv>=1.0.0
+opentelemetry-sdk>=1.24.0
+opentelemetry-exporter-otlp-proto-http>=1.24.0

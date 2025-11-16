@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 from typing import Any, Dict
 
@@ -31,9 +32,12 @@ def run_pipeline(args: argparse.Namespace) -> None:
     if args.output:
         _write_output(Path(args.output), result)
 
-    if args.user_id:
+    should_skip_db = args.skip_db or os.getenv("WEBANK_SKIP_DB", "false").lower() == "true"
+    if args.user_id and not should_skip_db:
         service = ConversationService()
         service.persist_pipeline_output(args.user_id, result)
+    elif args.user_id and should_skip_db:
+        print("[cli] WEBANK_SKIP_DB 启用，跳过数据库持久化。")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -62,6 +66,11 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument(
         "--model",
         help="Override the default model identifier configured via env vars.",
+    )
+    run_parser.add_argument(
+        "--skip-db",
+        action="store_true",
+        help="Skip persistence to MySQL even if user_id is provided (or set WEBANK_SKIP_DB=true).",
     )
     run_parser.set_defaults(func=run_pipeline)
 
