@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import json
+import logging
 from datetime import datetime
 from typing import Any, Dict, Optional
 
 from agents.db import db_cursor
+from agents.conversation import memory
 
 
 def fetch_latest_asset(user_id: str) -> Optional[Dict[str, Any]]:
@@ -70,9 +72,16 @@ def _fetch_latest(
         LIMIT 1
     """
 
-    with db_cursor() as (_, cursor):
-        cursor.execute(query, (user_id,))
-        row = cursor.fetchone()
+    if memory._USE_MEMORY:
+        return None
+
+    try:
+        with db_cursor() as (_, cursor):
+            cursor.execute(query, (user_id,))
+            row = cursor.fetchone()
+    except Exception as exc:  # pragma: no cover - keeps chat alive if table missing
+        logging.getLogger(__name__).warning("Fetch insight failed: %s", exc)
+        return None
 
     if not row:
         return None
