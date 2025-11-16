@@ -104,10 +104,11 @@ class WebankAgentPipeline:
             behavior_input = payload.get("behavior", {})
 
             socio_prompt = format_socio_role_prompt(socio_input)
+            socio_agent_name = getattr(self.socio_role_agent, "name", None) or "SocioRoleAgent"
             with trace_agent_span(
                 "agent.socio_role",
                 {
-                    "agent.name": self.socio_role_agent.name or "SocioRoleAgent",
+                    "agent.name": socio_agent_name,
                     "pipeline.stage": "socio_role",
                 },
             ) as span:
@@ -118,10 +119,11 @@ class WebankAgentPipeline:
                 _annotate_agent_structured_output(span, socio_result)
 
             asset_prompt = format_asset_prompt(asset_input)
+            asset_agent_name = getattr(self.asset_agent, "name", None) or "AssetAgent"
             with trace_agent_span(
                 "agent.asset",
                 {
-                    "agent.name": self.asset_agent.name or "AssetAgent",
+                    "agent.name": asset_agent_name,
                     "pipeline.stage": "asset",
                 },
             ) as span:
@@ -132,10 +134,11 @@ class WebankAgentPipeline:
                 _annotate_agent_structured_output(span, asset_result)
 
             behavior_prompt = format_behavior_prompt(behavior_input)
+            behavior_agent_name = getattr(self.behavior_agent, "name", None) or "BehaviorAgent"
             with trace_agent_span(
                 "agent.behavior",
                 {
-                    "agent.name": self.behavior_agent.name or "BehaviorAgent",
+                    "agent.name": behavior_agent_name,
                     "pipeline.stage": "behavior",
                 },
             ) as span:
@@ -152,10 +155,11 @@ class WebankAgentPipeline:
                 "context": payload.get("context", {}),
             }
             summary_prompt = format_summary_prompt(summary_payload)
+            summary_agent_name = getattr(self.summary_agent, "name", None) or "SummaryAgent"
             with trace_agent_span(
                 "agent.summary",
                 {
-                    "agent.name": self.summary_agent.name or "SummaryAgent",
+                    "agent.name": summary_agent_name,
                     "pipeline.stage": "summary",
                 },
             ) as span:

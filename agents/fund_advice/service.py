@@ -40,10 +40,11 @@ class FundAdviceService:
 
     def generate_advice(self, fund_payload: Dict[str, Any]) -> str:
         prompt = format_fund_prompt(fund_payload)
+        agent_name = getattr(self.agent, "name", None) or "FundAdviceAgent"
         with trace_agent_span(
             "agent.fund_advice",
             {
-                "agent.name": self.agent.name or "FundAdviceAgent",
+                "agent.name": agent_name,
             },
         ) as span:
             if span:
