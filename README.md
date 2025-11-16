@@ -65,6 +65,60 @@
 - `components/NewsPage/NewsDetail`：资讯列表与轮播。
 - `hooks/useAI` + `utils/BehaviorTracker`：统一管理建议展示、语音开关、行为上报。
 
+### 4.4 多 Agent 协作架构
+
+WeMate 的智能体验由多 Agent 协同驱动：实时在线链路负责对话、基金解读与行为提醒，离线管道沉淀结构化洞察供前者复用。核心思路是 **专职 Agent + 轻量桥接层**，既保持模型独立调参，也方便在 Flask 服务内热更新。
+
+```mermaid
+flowchart LR
+    subgraph Frontend
+        UI[Web/App<br/>AI 入口 + 资产页]
+    end
+    subgraph Backend
+        UI -->|/api/ai/conversation| CC[Conversation Controller<br/>对话控制器]
+        UI -->|/api/behavior/track| BC[Behavior Controller<br/>行为上报控制器]
+        UI -->|基金详情| FS[Fund Service<br/>基金服务编排]
+
+        CC --> CS[conversation_service<br/>对话服务桥接层]
+        BC --> BAS[behavior_agent_service<br/>行为 Agent 桥接层]
+        FS --> FAS[fund_agent_service<br/>基金建议桥接层]
+
+        CS --> CA[ConversationAgent<br/>多轮对话 Agent]
+        BAS --> BA[BehaviorAgent<br/>行为洞察 Agent]
+        FAS --> FA[FundAdviceAgent<br/>基金建议 Agent]
+
+        subgraph Offline Pipeline
+            ETL[(行为/资产日志)] --> WP[WebankAgentPipeline<br/>离线编排管道]
+            WP --> SRA[SocioRoleAgent<br/>社会角色 Agent]
+            WP --> ASA[AssetAgent<br/>资产画像 Agent]
+            WP --> BHA[BehaviorAgent<br/>行为洞察 Agent]
+            WP --> SNA[SummaryAgent<br/>洞察总结 Agent]
+        end
+
+        WP -->|洞察写入| Repo[(Insights/MySQL<br/>洞察存储)]
+        Repo --> CS
+        BA --> Repo
+    end
+```
+
+- **ConversationAgent**（`agents/conversation`）  
+  - *定位*：面向用户的多轮理财助手，所有 `/api/ai/conversation` 请求都经过 `services/conversation_service`，再转调远端 Agent。  
+  - *设计理念*：拉取 `fetch_user_insights()` 的画像、`memory` 中的历史消息构造 prompt；通过 `_strip_code_blocks` 防止 Markdown/JSON 注入；若远端模型不可用则降级到 `local_adapter` 生成确定性回复，保障对话不中断。
+
+- **BehaviorAgent**（`agents/behavior`）  
+  - *定位*：分析 BehaviorTracker 上报的埋点日志，产出运营级语句/NBA（Next Best Action），既在离线管道运行，也能被 `services/behavior_agent_service.generate_behavior_analysis` 实时调用。  
+  - *设计理念*：统一 prompt builder 和 `trace_agent_span` 埋点方便观测；输出由 `_coerce_to_dict` 兜底成 JSON，Bubble/通知无需复杂解析。
+
+- **FundAdviceAgent**（`agents/fund_advice`）  
+  - *定位*：在基金详情页生成个性化解读与风险提示。  
+  - *设计理念*：`services/fund_agent_service` 引入 300s LRU 缓存与签名函数，避免重复走大模型；失败时自动回落 `_fallback_fund_suggestion`，确保接口稳定。
+
+- **SocioRoleAgent / AssetAgent / SummaryAgent**（`agents/socio_role`, `asset`, `summary`）  
+  - *定位*：离线批处理链路的前三/终节点，依次完成社会角色打标、资产能力分层、跨源结果综述。  
+  - *设计理念*：由 `WebankAgentPipeline` 串联顺序执行，通过 `_annotate_agent_*` 将输入输出写入 Telemetry，方便和行内风控/监管系统对接；产物最终由 `/api/ai/insights/refresh` 写入 `insight_repository`，供对话与推荐 Agent 复用。
+
+借由上述拆分，WeMate 可以在不影响其它链路的情况下独立升级任一 Agent（更换模型、调提示词或加入观测），并通过统一洞察仓实现“离线沉淀 + 在线实时”的双速节奏。
+
 ---
 
 ## 5. 快速开始
