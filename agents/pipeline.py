@@ -12,7 +12,7 @@ from agno.agent import Agent
 from agents.asset.builder import build_asset_agent, format_asset_prompt
 from agents.behavior.builder import build_behavior_agent, format_behavior_prompt
 from agents.common.telemetry import trace_agent_span
-from agents.models import build_model_factory, default_model_factory
+from agents.models import build_model_factory
 from agents.socio_role.builder import (
     build_socio_role_agent,
     format_socio_role_prompt,
@@ -187,12 +187,17 @@ class WebankAgentPipeline:
 
 def build_default_pipeline(model_id: str | None = None) -> WebankAgentPipeline:
     """Construct the pipeline with DashScope models."""
-    factory = build_model_factory(model_id) if model_id else default_model_factory
-
-    socio_agent = build_socio_role_agent(model=factory())
-    asset_agent = build_asset_agent(model=factory())
-    behavior_agent = build_behavior_agent(model=factory())
-    summary_agent = build_summary_agent(model=factory())
+    if model_id:
+        factory = build_model_factory(model_id)
+        socio_agent = build_socio_role_agent(model=factory())
+        asset_agent = build_asset_agent(model=factory())
+        behavior_agent = build_behavior_agent(model=factory())
+        summary_agent = build_summary_agent(model=factory())
+    else:
+        socio_agent = build_socio_role_agent()
+        asset_agent = build_asset_agent()
+        behavior_agent = build_behavior_agent()
+        summary_agent = build_summary_agent()
 
     return WebankAgentPipeline(
         socio_role_agent=socio_agent,

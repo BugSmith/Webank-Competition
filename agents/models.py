@@ -12,7 +12,7 @@ DefaultModelFactory = Callable[[], DashScope]
 
 def default_model_factory() -> DashScope:
     """Return the default DashScope model configured via env vars."""
-    model_id = os.getenv("AGNO_MODEL_ID", "qwen-turbo-latest")
+    model_id = os.getenv("AGNO_MODEL_ID", "qwen-plus")
     temperature = float(os.getenv("AGNO_TEMPERATURE", "0.3"))
     base_url = os.getenv(
         "DASHSCOPE_BASE_URL",
@@ -24,7 +24,7 @@ def default_model_factory() -> DashScope:
 
 def build_model_factory(model_id: str | None = None) -> DefaultModelFactory:
     """Build a factory producing DashScope models with a fixed identifier."""
-    fallback_id = os.getenv("AGNO_MODEL_ID", "qwen-turbo-latest")
+    fallback_id = os.getenv("AGNO_MODEL_ID", "qwen-plus")
     resolved_model_id = model_id or fallback_id
     temperature = float(os.getenv("AGNO_TEMPERATURE", "0.3"))
     base_url = os.getenv(

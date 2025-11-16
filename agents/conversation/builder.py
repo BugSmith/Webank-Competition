@@ -13,11 +13,13 @@ from typing import Any, Dict, List, Optional
 from agno.agent import Agent
 from agno.models.base import Model
 
-from agents.models import default_model_factory
+from agents.models import build_model_factory
 
 PROMPTS_DIR = Path(__file__).resolve().parents[2] / "prompts"
 CONVERSATION_PROMPT_PATH = PROMPTS_DIR / "conversation_system_prompt.md"
 CONVERSATION_SYSTEM_PROMPT = CONVERSATION_PROMPT_PATH.read_text(encoding="utf-8")
+CONVERSATION_MODEL_ID = os.getenv("CONVERSATION_AGENT_MODEL_ID", "qwen-plus")
+_CONVERSATION_MODEL_FACTORY = build_model_factory(CONVERSATION_MODEL_ID)
 logger = logging.getLogger(__name__)
 
 
@@ -72,7 +74,7 @@ def build_conversation_agent(model: Model | None = None) -> Agent:
     if _has_dashscope_key():
         return Agent(
             name="ConversationAgent",
-            model=model or default_model_factory(),
+            model=model or _CONVERSATION_MODEL_FACTORY(),
             instructions=CONVERSATION_SYSTEM_PROMPT,
             markdown=False,
         )

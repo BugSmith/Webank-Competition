@@ -119,6 +119,29 @@ flowchart LR
 
 借由上述拆分，WeMate 可以在不影响其它链路的情况下独立升级任一 Agent（更换模型、调提示词或加入观测），并通过统一洞察仓实现“离线沉淀 + 在线实时”的双速节奏。
 
+### 4.5 技术选型与模型策略
+
+#### 工程技术栈
+| 层级 | 选型 | 适用理由 |
+| --- | --- | --- |
+| **后端 API** | Python 3.10 + Flask + Gunicorn（可选） | Flask 足够轻量，便于快速迭代 AI 实验；Gunicorn 让 B2B 部署更接近生产环境。 |
+| **数据层** | MySQL 5.7（主）、SQLite/Memory（备）、SQLAlchemy ORM | 金融资产与行为日志需要强一致、可审计；ORM 让本地调试与线上迁移保持统一结构。 |
+| **缓存/异步** | Redis（建议）+ 内置 LRU Cache | 行为/基金 Agent 结果具备短时复用价值；LRU 防止重复调用大模型，Redis 可扩展到多节点。 |
+| **前端** | React + Vite + Zustand + Tailwind/AntD 组件 | React/Vite 兼顾开发体验和性能，Zustand 管理 AI 助手状态，Tailwind/AntD 快速搭建金融风格 UI。 |
+| **可观测性** | OpenTelemetry + LangSmith（可选） | Agent 运行链路需可追踪，方便复盘 prompt/模型表现并满足金融合规审计。 |
+| **部署形态** | Flask App（VM/K8s）、Vercel（静态站）、Serverless 入口 | 满足合作方“私有化部署 + 公有云演示”的双轨诉求。 |
+
+#### 大模型任务选型与理由
+| Agent/任务 | 首选模型 | 备选模型 | 选择理由 |
+| --- | --- | --- | --- |
+| **ConversationAgent**（多轮对话） | DashScope `qwen-plus` | | `qwen-plus` 提供 32k 上下文与稳定的工具调用，便于引用资产、资讯与历史对话。 |
+| **BehaviorAgent**（行为洞察 + NBA） | DashScope `qwen-plus` | `qwen-turbo` | 行为分析强调结构化 JSON 与高召回，`qwen-plus` 在函数式输出表现稳定。 |
+| **FundAdviceAgent**（基金分析） | DashScope `qwen-plus` | `qwen-turbo` + 本地估值模板 | 基金建议需要结合收益、回撤、适配度等多维指标，`qwen-plus` 对中文金融语境理解更好 |
+| **SocioRoleAgent / AssetAgent**（离线画像） | DashScope `qwen-max` | `qwen-plus` | 画像链路处理长段结构化字段、需跨域推理，`qwen-max` 拥有更强推理与事实一致性；若算力受限，可回退到 `qwen-plus`。 |
+| **SummaryAgent**（多源总结与下发话术） | DashScope `qwen-max` | `qwen-plus` | SummaryAgent 需综合多个 Agent 结果并检验引用，`qwen-max` 在跨段引用和合规措辞上准确度更高，无法使用时再回退至 `qwen-plus`。 |
+
+> 以上模型均通过 `services/*_agent_service` 以 Abstraction Layer 注入，能够按环境变量或客户契约随时更换。由于多 Agent 解耦，可独立评估“准确率 / 生成成本 / 数据驻留地”后替换对应模型，满足银行/券商的合规要求。
+
 ---
 
 ## 5. 快速开始
